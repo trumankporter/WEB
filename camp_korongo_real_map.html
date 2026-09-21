@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Senses Camp Korongo — Southwest Basecamp Map</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    --parchment: #f6f0e3;
+    --ink: #2f2a20;
+    --muted: #7a6f5a;
+    --gold: #a9843f;
+    --gold-dark: #7c5f2c;
+    --ring: #b3502f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #e7ddc9; font-family: Arial, Helvetica, sans-serif; color: var(--ink); }
+  .wrap { display: flex; flex-direction: column; height: 100vh; }
+  .header {
+    text-align: center; padding: 20px 16px 14px; background: var(--parchment);
+    border-bottom: 1px solid #d8c9a3; flex: 0 0 auto;
+  }
+  .header .kicker {
+    letter-spacing: 0.3em; font-size: 11px; color: var(--gold-dark);
+    text-transform: uppercase; font-weight: 700;
+  }
+  .header h1 {
+    margin: 6px 0 4px; font-family: Georgia, 'Times New Roman', serif; font-weight: 400;
+    font-size: 30px; letter-spacing: 0.04em; color: var(--ink);
+  }
+  .header .sub { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  #map { flex: 1 1 auto; background: #cfe3d8; }
+  .legend {
+    position: absolute; bottom: 14px; left: 14px; z-index: 500;
+    background: rgba(246,240,227,0.92); border: 1px solid #d8c9a3; border-radius: 6px;
+    padding: 8px 12px; font-size: 11px; color: var(--ink); line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .legend .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background: var(--ring); margin-right:6px; }
+  .photo-marker { display: flex; flex-direction: column; align-items: center; pointer-events: auto; }
+  .photo-marker .circle {
+    border-radius: 50%; overflow: hidden; border-style: solid; border-color: #fff;
+    box-shadow: 0 2px 8px rgba(40,30,10,0.45), 0 0 0 1.5px var(--gold);
+    background: linear-gradient(135deg,#c9a25b,#8a6d3b);
+  }
+  .photo-marker .circle img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-marker .cap {
+    margin-top: 3px; font-weight: 700; text-align: center; white-space: nowrap;
+    background: rgba(246,240,227,0.92); padding: 1px 5px; border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .kanab-marker .circle { box-shadow: 0 4px 14px rgba(40,30,10,0.55), 0 0 0 3px var(--gold); }
+  .kanab-marker .cap { font-size: 13px; letter-spacing: 0.04em; }
+  .kanab-marker .eyebrow { display:block; font-size: 9px; letter-spacing: 0.25em; color: var(--gold-dark); font-weight:700; }
+  .leaflet-popup-content { font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="kicker">Six Senses &middot; Kanab, Utah</div>
+    <h1>Camp Korongo</h1>
+    <div class="sub">Your basecamp for the American Southwest — drag and zoom to explore</div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+const KANAB = {"lat": 37.05, "lon": -112.53, "img": "https://media.sixsenses.com/B60H3R33/at/fpvnkmbr2fq8mk4zqrkcv8/Six_Senses_Camp_Korongo_Cliff.jpg?format=webp&width=400"};
+const MARKERS = [{"name": "Zion National Park", "lat": 37.201, "lon": -112.986, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/68BFC1AC-BF96-629F-89D261D78F181C64.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Bryce Canyon Nat'l Park", "lat": 37.593, "lon": -112.187, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/61F08520-E14F-18F2-BF5F3D89482631BD.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Grand Canyon - North Rim", "lat": 36.198, "lon": -112.051, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/6C7F2214-CE4D-E366-A283BE0F4E65F83B.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Grand Canyon - South Rim", "lat": 36.057, "lon": -112.142, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/6D21F1C3-FC94-9597-A861557ED5AD2BC2.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Capitol Reef Nat'l Park", "lat": 38.291, "lon": -111.262, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/3C82E3C7-1DD8-B71B-0B4181834EE46AED.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Cedar Breaks Nat'l Mon.", "lat": 37.636, "lon": -112.845, "tier": "A", "img": "https://www.nps.gov/common/uploads/structured_data/3C7E0046-1DD8-B71B-0B98037C3E2F685B.jpg", "size": 84, "border": 4, "font": 12.5}, {"name": "Monument Valley", "lat": 36.983, "lon": -110.1, "tier": "B", "img": "https://navajonationparks.org/wp-content/uploads/sites/6891/2026/03/20230815_200811-Copy-rotated.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Lake Powell", "lat": 37.3, "lon": -110.9, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/3C7F18D2-1DD8-B71B-0B2F7E916D696EF7.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Glen Canyon Nat'l Rec. Area", "lat": 36.936, "lon": -111.484, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/3C7F1632-1DD8-B71B-0B783D849BA99EC8.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Grand Staircase-Escalante", "lat": 37.6, "lon": -111.5, "tier": "B", "img": "https://www.blm.gov/sites/default/files/styles/hero_lg_content/public/heros/GSENM%20%287%20of%20119%29%20web.JPG", "size": 64, "border": 3, "font": 11.3}, {"name": "Marble Canyon", "lat": 36.862, "lon": -111.627, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/3C7F1785-1DD8-B71B-0B81A2F06EBCF732.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Arches National Park", "lat": 38.733, "lon": -109.593, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/3C79931C-1DD8-B71B-0BF201E3DB540D04.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Canyonlands Nat'l Park", "lat": 38.459, "lon": -109.821, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/D074F5CF-90A6-0468-24D18A9B669CC859.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Moab", "lat": 38.573, "lon": -109.549, "tier": "B", "img": "https://www.visitutah.com/azure/cmsroot/visitutah/media/site-assets/three-season-photography/southeastern-utah/moab/downtown-moab-uot-moab_diamond-austen_2019.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Sedona", "lat": 34.869, "lon": -111.761, "tier": "B", "img": "https://cdn.prod.website-files.com/683a4969614808c01cd0d378/699ef525ea3619beb7a5360b_68462525f3a2dc77c7d6ab2b_SEDONA.jpeg", "size": 64, "border": 3, "font": 11.3}, {"name": "Rainbow Bridge Nat'l Monument", "lat": 37.083, "lon": -110.963, "tier": "B", "img": "https://www.nps.gov/common/uploads/structured_data/02F6D50C-C3E7-EC4B-E6379DBA1C9A3806.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Grand Canyon Skywalk", "lat": 35.972, "lon": -113.809, "tier": "B", "img": "https://grandcanyonwest.com/wp-content/uploads/2025/12/Skywalk-at-GCW-2.jpg", "size": 64, "border": 3, "font": 11.3}, {"name": "Four Corners Monument", "lat": 36.999, "lon": -109.045, "tier": "C", "img": "https://navajonationparks.org/wp-content/uploads/sites/6891/2021/02/4C-pic--scaled.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Navajo National Monument", "lat": 36.68, "lon": -110.537, "tier": "C", "img": "https://www.nps.gov/common/uploads/structured_data/3C821A96-1DD8-B71B-0B6A3DE748A3EA81.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Durango", "lat": 37.273, "lon": -107.88, "tier": "C", "img": "https://assets.simpleviewinc.com/simpleview/image/upload/c_limit,h_1200,q_75,w_1200/v1/clients/durangoco/318_3_8122_jpeg_7d0ae312-c274-48f2-8853-fbfa9ed6218c.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Mesa Verde Nat'l Park", "lat": 37.183, "lon": -108.491, "tier": "C", "img": "https://www.nps.gov/common/uploads/structured_data/3C7C0089-1DD8-B71B-0BC397BA671C0616.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Petrified Forest Nat'l Park", "lat": 34.91, "lon": -109.807, "tier": "C", "img": "https://www.nps.gov/common/uploads/structured_data/3C7D8213-1DD8-B71B-0BE4A3B9394FD89A.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Flagstaff", "lat": 35.198, "lon": -111.651, "tier": "C", "img": "https://www.nps.gov/common/uploads/structured_data/3C7E279C-1DD8-B71B-0BBF86870A971E2B.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Salt Lake City", "lat": 40.76, "lon": -111.891, "tier": "C", "img": "https://www.visitutah.com/azure/cmsroot/visitutah/media/site-assets/three-season-photography/wasatch-metro/salt-lake-city-3/salt-lake-city_wasatch-mountains_skyline_visit-salt-lake.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Las Vegas", "lat": 36.171, "lon": -115.139, "tier": "C", "img": "https://assets.simpleviewcms.com/simpleview/image/upload/c_limit,h_1200,q_75,w_1200/v1/clients/lasvegas/RR_LVCVA_Strip_Caesars_Bellagio_Paris_SM_1__704abf3c-7d0a-4d56-ae67-3167dc7784b4.jpg", "size": 44, "border": 2, "font": 10.2}, {"name": "Phoenix", "lat": 33.448, "lon": -112.074, "tier": "C", "img": "https://assets.simpleviewinc.com/simpleview/image/upload/c_limit,h_1200,q_75,w_1200/v1/clients/phoenix/148e5282_6056_4aca_9135_d0d5f25e9a9d_df00ab2b-7f9c-462e-a8a7-903f8757870e.jpg", "size": 44, "border": 2, "font": 10.2}];
+const RING_MILES = [[1, 50], [2, 100], [3, 150], [4, 200]];
+const MILE_M = 1609.34;
+
+const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([KANAB.lat, KANAB.lon], 8);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// drive-time rings
+const ringColor = '#b3502f';
+RING_MILES.forEach(([hr, mi]) => {
+  L.circle([KANAB.lat, KANAB.lon], {
+    radius: mi * MILE_M,
+    color: ringColor, weight: 1.4, dashArray: '3 7', fillOpacity: 0, opacity: 0.55
+  }).addTo(map);
+});
+
+// Kanab center marker
+const kanabIcon = L.divIcon({
+  className: '',
+  html: `<div class="photo-marker kanab-marker">
+           <div class="circle" style="width:110px;height:110px;border-width:4px;">
+             <img src="${KANAB.img}" onerror="this.parentElement.style.background='linear-gradient(135deg,#c9a25b,#8a6d3b)'; this.style.display='none';">
+           </div>
+           <div class="cap"><span class="eyebrow">SIX SENSES</span>CAMP KORONGO</div>
+         </div>`,
+  iconSize: [110, 140],
+  iconAnchor: [55, 55],
+});
+L.marker([KANAB.lat, KANAB.lon], {icon: kanabIcon, zIndexOffset: 1000})
+  .addTo(map)
+  .bindPopup('<b>Six Senses Camp Korongo</b><br>Kanab, Utah &mdash; announced 2026, opening 2029');
+
+MARKERS.forEach(m => {
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="photo-marker">
+             <div class="circle" style="width:${m.size}px;height:${m.size}px;border-width:${m.border}px;">
+               <img src="${m.img}" alt="${m.name}" loading="lazy"
+                    onerror="this.parentElement.style.background='linear-gradient(135deg,#c9a25b,#8a6d3b)'; this.style.display='none';">
+             </div>
+             <div class="cap" style="font-size:${m.font}px;">${m.name}</div>
+           </div>`,
+    iconSize: [m.size, m.size + 26],
+    iconAnchor: [m.size/2, m.size/2],
+  });
+  L.marker([m.lat, m.lon], {icon: icon})
+    .addTo(map)
+    .bindPopup(`<b>${m.name}</b>`);
+});
+
+// fit bounds to everything with padding, but keep a sensible default zoom
+const allPts = MARKERS.map(m => [m.lat, m.lon]).concat([[KANAB.lat, KANAB.lon]]);
+map.fitBounds(L.latLngBounds(allPts), { padding: [60, 60] });
+</script>
+
+<div class="legend">
+  <div><span class="dot"></span>Dashed rings: ~1 / 2 / 3 / 4 hour drive radius from Camp Korongo (straight-line)</div>
+</div>
+</body>
+</html>
