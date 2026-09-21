@@ -75,7 +75,7 @@ const MILE_M = 1609.34;
 
 const map = L.map('map', { zoomControl: true, scrollWheelZoom: true }).setView([KANAB.lat, KANAB.lon], 8);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_3svt_1_672ee1cd33dc8ed053488d0f', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 19
